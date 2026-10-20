@@ -1,0 +1,29 @@
+# ----------------------------------------------------------------------
+# MediToken - Production Apache Configuration (.htaccess)
+# ----------------------------------------------------------------------
+
+# 1. Disable directory listing
+Options -Indexes
+
+# 2. Set default index page
+DirectoryIndex index.php
+
+# 3. Default charset
+AddDefaultCharset UTF-8
+
+# 4. Protect sensitive files and directories from web access
+<FilesMatch "^(\.env|\.git|\.gitignore|meditoken_db\.sql|composer\.(json|lock)|README\.md|PROJECT_DOCUMENTATION\.md)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 5. Block access to hidden dotfiles
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\.(?!well-known/)" - [F]
+</IfModule>
