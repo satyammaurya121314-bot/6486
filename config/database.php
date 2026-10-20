@@ -64,7 +64,40 @@ function get_db_connection() {
                 die("Database connection failed: " . htmlspecialchars($e->getMessage()));
             }
         }
+
+        // Auto-initialize schema and default admin if database is brand new
+        ensure_schema_initialized($pdo);
     }
 
     return $pdo;
+}
+
+function ensure_schema_initialized($pdo) {
+    static $initialized = false;
+    if ($initialized) return;
+    $initialized = true;
+
+    try {
+        $check = $pdo->query("SHOW TABLES LIKE 'admins'");
+        if ($check->rowCount() === 0) {
+            $sqlFile = __DIR__ . '/../database/meditoken_db.sql';
+            if (file_exists($sqlFile)) {
+                $sql = file_get_contents($sqlFile);
+                // Strip database creation/selection commands for cloud compatibility
+                $sql = preg_replace('/CREATE\s+DATABASE[^;]+;/i', '', $sql);
+                $sql = preg_replace('/USE\s+[`a-zA-Z0-9_-]+;/i', '', $sql);
+                $pdo->exec($sql);
+
+                // Ensure initial admin user exists
+                $adminCheck = $pdo->query("SELECT COUNT(*) FROM admins");
+                if ((int)$adminCheck->fetchColumn() === 0) {
+                    $defaultPassword = password_hash('123456', PASSWORD_BCRYPT);
+                    $ins = $pdo->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
+                    $ins->execute(['satyam123@gmail.com', $defaultPassword]);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Schema auto-initialization error: " . $e->getMessage());
+    }
 }
