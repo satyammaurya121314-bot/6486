@@ -28,11 +28,11 @@ function get_config($key, $default = '') {
     return $val;
 }
 
-define('DB_HOST', get_config('DB_HOST', 'localhost'));
-define('DB_PORT', get_config('DB_PORT', '3306'));
-define('DB_NAME', get_config('DB_NAME', 'meditoken_db'));
-define('DB_USER', get_config('DB_USER', 'root'));
-define('DB_PASS', get_config('DB_PASS', ''));
+define('DB_HOST', get_config('MYSQLHOST', get_config('DB_HOST', 'localhost')));
+define('DB_PORT', get_config('MYSQLPORT', get_config('DB_PORT', '3306')));
+define('DB_NAME', get_config('MYSQLDATABASE', get_config('DB_NAME', 'meditoken_db')));
+define('DB_USER', get_config('MYSQLUSER', get_config('DB_USER', 'root')));
+define('DB_PASS', get_config('MYSQLPASSWORD', get_config('DB_PASS', '')));
 define('DB_CHARSET', get_config('DB_CHARSET', 'utf8mb4'));
 define('APP_ENV', get_config('APP_ENV', 'development'));
 
