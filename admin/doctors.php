@@ -137,7 +137,7 @@ if ($search !== '') {
     $params[] = "%{$search}%";
     $params[] = "%{$search}%";
 }
-$sql .= " ORDER BY doctor_name ASC";
+$sql .= " ORDER BY doctor_id ASC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $doctors = $stmt->fetchAll();
@@ -294,9 +294,9 @@ include __DIR__ . '/../includes/header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($doctors as $d): ?>
+                            <?php foreach ($doctors as $index => $d): ?>
                                 <tr>
-                                    <td>#<?= (int)$d['doctor_id'] ?></td>
+                                    <td>#<?= $index + 1 ?></td>
                                     <td><strong>Dr. <?= htmlspecialchars($d['doctor_name']) ?></strong></td>
                                     <td><?= htmlspecialchars($d['email']) ?></td>
                                     <td><span style="color: var(--primary); font-weight: 600;"><?= htmlspecialchars($d['specialization']) ?></span></td>

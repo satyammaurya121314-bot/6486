@@ -75,6 +75,7 @@ include __DIR__ . '/../includes/header.php';
                 <table class="custom-table">
                     <thead>
                         <tr>
+                            <th>Patient ID</th>
                             <th>Patient Name</th>
                             <th>Mobile Number</th>
                             <th>Email Address</th>
@@ -83,8 +84,9 @@ include __DIR__ . '/../includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($patients as $p): ?>
+                        <?php foreach ($patients as $index => $p): ?>
                             <tr>
+                                <td>#<?= $index + 1 ?></td>
                                 <td><strong><?= htmlspecialchars($p['patient_name']) ?></strong></td>
                                 <td><?= htmlspecialchars($p['mobile_no']) ?></td>
                                 <td><?= htmlspecialchars($p['email']) ?></td>

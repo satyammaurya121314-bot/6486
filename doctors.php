@@ -24,7 +24,7 @@ if ($specialization !== '') {
     $params[] = $specialization;
 }
 
-$sql .= " ORDER BY doctor_name ASC";
+$sql .= " ORDER BY doctor_id ASC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $doctors = $stmt->fetchAll();
@@ -84,7 +84,7 @@ include __DIR__ . '/includes/header.php';
             </div>
         <?php else: ?>
             <div class="cards-grid">
-                <?php foreach ($doctors as $doc): ?>
+                <?php foreach ($doctors as $index => $doc): ?>
                     <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem;">
@@ -100,7 +100,7 @@ include __DIR__ . '/includes/header.php';
 
                             <h3 class="card-title" style="margin-bottom: 0.35rem;">
                                 Dr. <?= htmlspecialchars($doc['doctor_name']) ?>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-left: 0.35rem;">#<?= (int)$doc['doctor_id'] ?></span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-left: 0.35rem;">#<?= $index + 1 ?></span>
                             </h3>
                             <p style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 0.85rem;">
                                 <?= htmlspecialchars($doc['specialization']) ?>

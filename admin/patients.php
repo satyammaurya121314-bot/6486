@@ -45,7 +45,7 @@ if ($search !== '') {
     $params[] = "%{$search}%";
 }
 
-$sql .= " GROUP BY p.patient_id, p.name, p.mobile_no, p.email, p.created_at ORDER BY p.created_at DESC";
+$sql .= " GROUP BY p.patient_id, p.name, p.mobile_no, p.email, p.created_at ORDER BY p.patient_id ASC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $patients = $stmt->fetchAll();
@@ -99,9 +99,9 @@ include __DIR__ . '/../includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($patients as $p): ?>
+                        <?php foreach ($patients as $index => $p): ?>
                             <tr>
-                                <td>#<?= (int)$p['patient_id'] ?></td>
+                                <td>#<?= $index + 1 ?></td>
                                 <td><strong><?= htmlspecialchars($p['name']) ?></strong></td>
                                 <td><?= htmlspecialchars($p['mobile_no']) ?></td>
                                 <td><?= htmlspecialchars($p['email']) ?></td>

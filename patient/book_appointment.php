@@ -18,7 +18,7 @@ $confirmed_appointment = null;
 $doc_stmt = $pdo->query("
     SELECT doctor_id, doctor_name, specialization, available_time, availability_status 
     FROM doctors 
-    ORDER BY doctor_name ASC
+    ORDER BY doctor_id ASC
 ");
 $all_doctors = $doc_stmt->fetchAll();
 
@@ -32,9 +32,11 @@ if ($selected_date < date('Y-m-d')) {
 
 // Find chosen doctor details
 $current_doctor = null;
-foreach ($all_doctors as $doc) {
+$current_doctor_index = 0;
+foreach ($all_doctors as $idx => $doc) {
     if ((int)$doc['doctor_id'] === $selected_doctor_id) {
         $current_doctor = $doc;
+        $current_doctor_index = $idx;
         break;
     }
 }
@@ -224,9 +226,9 @@ include __DIR__ . '/../includes/header.php';
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label class="form-label" for="doctor_select">1. Select Consulting Doctor</label>
                                 <select id="doctor_select" name="doctor_id" class="form-select" onchange="document.getElementById('doctorDateForm').submit();">
-                                    <?php foreach ($all_doctors as $doc): ?>
+                                    <?php foreach ($all_doctors as $index => $doc): ?>
                                         <option value="<?= (int)$doc['doctor_id'] ?>" <?= $selected_doctor_id === (int)$doc['doctor_id'] ? 'selected' : '' ?>>
-                                            Dr. <?= htmlspecialchars($doc['doctor_name']) ?> (ID: #<?= (int)$doc['doctor_id'] ?> - <?= htmlspecialchars($doc['specialization']) ?>) - [<?= htmlspecialchars($doc['availability_status']) ?>]
+                                            Dr. <?= htmlspecialchars($doc['doctor_name']) ?> (ID: #<?= $index + 1 ?> - <?= htmlspecialchars($doc['specialization']) ?>) - [<?= htmlspecialchars($doc['availability_status']) ?>]
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -245,7 +247,7 @@ include __DIR__ . '/../includes/header.php';
                             <div>
                                 <div style="font-weight: 700; font-size: 1.05rem;">
                                     Dr. <?= htmlspecialchars($current_doctor['doctor_name']) ?>
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); margin-left: 0.35rem;">Doctor ID: #<?= (int)$current_doctor['doctor_id'] ?></span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); margin-left: 0.35rem;">Doctor ID: #<?= $current_doctor_index + 1 ?></span>
                                 </div>
                                 <div style="color: var(--primary); font-size: 0.85rem; font-weight: 600;"><?= htmlspecialchars($current_doctor['specialization']) ?></div>
                                 <div style="color: var(--text-muted); font-size: 0.825rem; margin-top: 0.25rem;">
