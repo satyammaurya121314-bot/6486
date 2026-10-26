@@ -6,6 +6,9 @@ RUN docker-php-ext-install pdo pdo_mysql
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
+# Fix conflicting MPM modules
+RUN a2dismod -f mpm_event mpm_worker 2>/dev/null || true && a2enmod mpm_prefork
+
 # Enable .htaccess overrides in Apache
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
@@ -18,7 +21,7 @@ COPY . /var/www/html/
 # Ensure proper permissions for Apache web server
 RUN chown -R www-data:www-data /var/www/html
 
-# Copy and setup entrypoint script for dynamic $PORT binding
+# Copy entrypoint script for dynamic $PORT binding
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 

@@ -1,12 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-# Default to port 80 if PORT environment variable is not set
-TARGET_PORT="${PORT:-80}"
+# Disable conflicting MPM modules and ensure only mpm_prefork is active
+a2dismod -f mpm_event mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
 
-# Configure Apache to listen on $PORT assigned by cloud platform (Railway/Render)
+# Dynamic port binding for Railway ($PORT)
+TARGET_PORT="${PORT:-80}"
 sed -i "s/Listen 80/Listen ${TARGET_PORT}/g" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:80>/<VirtualHost \*:${TARGET_PORT}>/g" /etc/apache2/sites-available/000-default.conf
 
-# Execute Apache foreground process
+# Execute CMD (apache2-foreground)
 exec "$@"
