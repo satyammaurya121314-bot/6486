@@ -90,7 +90,6 @@ include __DIR__ . '/../includes/header.php';
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Appointment Registry</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Comprehensive clinic booking log from MySQL database.</p>
             </div>
         </div>
 

@@ -60,7 +60,6 @@ include __DIR__ . '/../includes/header.php';
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Administrator Control Panel</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Clinic metrics calculated in real-time from MySQL database.</p>
             </div>
             <div style="display: flex; gap: 0.75rem;">
                 <a href="<?= $base_url ?>/admin/doctors.php?action=add" class="btn btn-primary">+ Add Doctor</a>
