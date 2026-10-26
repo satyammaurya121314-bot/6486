@@ -1,6 +1,6 @@
 <?php
 // patient/dashboard.php
-// Patient Dashboard querying actual MySQL records
+// Patient Dashboard with day-wise consultation clarity and live queue tracking
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/auth.php';
@@ -10,26 +10,34 @@ require_role('patient');
 
 $pdo = get_db_connection();
 $patient_id = $_SESSION['user_id'];
+$today = date('Y-m-d');
 
-// Fetch the most immediate active appointment for this patient
+// Fetch the most immediate active appointment for this patient (Today first, then upcoming future)
 $stmt = $pdo->prepare("
     SELECT a.*, d.doctor_name, d.specialization, d.available_time
     FROM appointments a
     JOIN doctors d ON a.doctor_id = d.doctor_id
     WHERE a.patient_id = ? 
       AND a.status IN ('Waiting', 'Serving')
-    ORDER BY a.appointment_date ASC, a.appointment_time ASC
+      AND a.appointment_date >= ?
+    ORDER BY 
+      CASE WHEN a.appointment_date = ? THEN 1 ELSE 2 END,
+      a.appointment_date ASC, 
+      a.appointment_time ASC
     LIMIT 1
 ");
-$stmt->execute([$patient_id]);
+$stmt->execute([$patient_id, $today, $today]);
 $active_apt = $stmt->fetch();
+
+$is_today_apt = ($active_apt && $active_apt['appointment_date'] === $today);
+$is_future_apt = ($active_apt && $active_apt['appointment_date'] > $today);
 
 $current_serving_token = 'None';
 $patients_ahead = 0;
 $estimated_wait = 'No active queue';
 
 if ($active_apt) {
-    // Find currently serving token for this doctor and date
+    // Find currently serving token for this doctor on the appointment's date
     $serving_stmt = $pdo->prepare("
         SELECT token_number 
         FROM appointments 
@@ -42,7 +50,7 @@ if ($active_apt) {
         $current_serving_token = $serving_token;
     }
 
-    // Count waiting patients before this patient's token/appointment
+    // Count waiting patients before this patient's token/appointment on this date
     if ($active_apt['status'] === 'Serving') {
         $patients_ahead = 0;
         $estimated_wait = 'Now being served';
@@ -83,11 +91,15 @@ include __DIR__ . '/../includes/header.php';
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">
                     Patient Dashboard
-                    <span style="font-size: 0.95rem; color: var(--primary); font-weight: 700; background: var(--primary-light); padding: 0.25rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); vertical-align: middle; margin-left: 0.5rem;">Patient ID: #<?= (int)$patient_id ?></span>
                 </h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Welcome back, <?= htmlspecialchars($_SESSION['user_name']) ?>. Here is your live appointment summary.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Welcome back, <?= htmlspecialchars($_SESSION['user_name']) ?>. Today is <strong><?= date('l, d M Y') ?></strong>.
+                </p>
             </div>
-            <div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="<?= $base_url ?>/patient/queue.php?date=<?= $today ?>" class="btn btn-secondary">
+                    🔴 View Today's Live Queue
+                </a>
                 <a href="<?= $base_url ?>/patient/book_appointment.php" class="btn btn-primary">
                     + Book New Appointment
                 </a>
@@ -104,19 +116,31 @@ include __DIR__ . '/../includes/header.php';
         <div class="stats-grid">
             <div class="stat-card">
                 <div>
-                    <div class="stat-label">My Current Token</div>
-                    <div class="stat-value" style="color: var(--primary);">
+                    <div class="stat-label">
+                        <?= $is_today_apt ? "My Today's Token" : ($is_future_apt ? "Upcoming Booked Token" : "My Active Token") ?>
+                    </div>
+                    <div class="stat-value" id="dashboardMyToken" style="color: var(--primary);">
                         <?= $active_apt ? htmlspecialchars($active_apt['token_number']) : '-' ?>
                     </div>
+                    <?php if ($is_future_apt): ?>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            For <?= format_date($active_apt['appointment_date']) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="stat-icon stat-green" style="font-size: 0.85rem; font-weight: 700;">TKN</div>
             </div>
 
             <div class="stat-card">
                 <div>
-                    <div class="stat-label">Current Serving Token</div>
-                    <div class="stat-value" style="color: #0284c7;">
+                    <div class="stat-label">
+                        <?= $is_today_apt ? "Current Serving Today" : ($is_future_apt ? "Serving (On That Day)" : "Current Serving") ?>
+                    </div>
+                    <div class="stat-value" id="dashboardServingToken" style="color: #0284c7;">
                         <?= htmlspecialchars($current_serving_token) ?>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        <?= $is_today_apt ? "Live Consultation Room" : ($is_future_apt ? "Queue starts on " . format_date($active_apt['appointment_date']) : "Consultation Desk") ?>
                     </div>
                 </div>
                 <div class="stat-icon stat-blue" style="font-size: 0.85rem; font-weight: 700;">SRV</div>
@@ -124,9 +148,12 @@ include __DIR__ . '/../includes/header.php';
 
             <div class="stat-card">
                 <div>
-                    <div class="stat-label">Patients Ahead</div>
-                    <div class="stat-value" style="color: #d97706;">
+                    <div class="stat-label">Patients Ahead In Line</div>
+                    <div class="stat-value" id="dashboardPatientsAhead" style="color: #d97706;">
                         <?= $active_apt ? $patients_ahead : '-' ?>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        <?= $active_apt ? "In sequence for that day" : "No active queue" ?>
                     </div>
                 </div>
                 <div class="stat-icon stat-amber" style="font-size: 0.85rem; font-weight: 700;">QUE</div>
@@ -135,32 +162,51 @@ include __DIR__ . '/../includes/header.php';
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Appointment Status</div>
-                    <div style="margin-top: 0.4rem;">
+                    <div id="dashboardStatusBadge" style="margin-top: 0.4rem;">
                         <?= $active_apt ? render_status_badge($active_apt['status']) : '<span style="color: var(--text-muted); font-size: 0.9rem;">None Active</span>' ?>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+                        <?= $is_today_apt ? "Today's Active Day" : ($is_future_apt ? format_date($active_apt['appointment_date']) : "Schedule status") ?>
                     </div>
                 </div>
                 <div class="stat-icon stat-purple" style="font-size: 0.85rem; font-weight: 700;">STS</div>
             </div>
         </div>
 
-        <!-- Upcoming Appointment Details -->
+        <!-- Appointment Details Card -->
         <div class="card" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
-                <h2 style="font-size: 1.25rem;">Upcoming Appointment</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <h2 style="font-size: 1.25rem; margin: 0;">
+                        <?= $is_today_apt ? "Today's Scheduled Consultation" : "Upcoming Scheduled Consultation" ?>
+                    </h2>
+                    <?php if ($is_today_apt): ?>
+                        <span class="status-badge badge-serving"><span class="status-pulse"></span> Active Today</span>
+                    <?php elseif ($is_future_apt): ?>
+                        <span class="status-badge badge-waiting">📅 Scheduled for <?= format_date($active_apt['appointment_date']) ?></span>
+                    <?php endif; ?>
+                </div>
+
                 <?php if ($active_apt): ?>
-                    <a href="<?= $base_url ?>/patient/queue.php?appointment_id=<?= (int)$active_apt['appointment_id'] ?>" class="btn btn-sm btn-primary">
-                        Track Live Queue &rarr;
+                    <a href="<?= $base_url ?>/patient/queue.php?date=<?= $active_apt['appointment_date'] ?>&appointment_id=<?= (int)$active_apt['appointment_id'] ?>" class="btn btn-sm btn-primary">
+                        Track Day's Live Queue &rarr;
                     </a>
                 <?php endif; ?>
             </div>
 
             <?php if (!$active_apt): ?>
                 <div class="empty-state" style="padding: 2.5rem 1rem;">
-                    <div class="empty-state-title">No upcoming appointments.</div>
-                    <p class="empty-state-desc">You currently do not have any waiting or serving appointments scheduled.</p>
-                    <a href="<?= $base_url ?>/patient/book_appointment.php" class="btn btn-primary" style="margin-top: 1.25rem;">Book an Appointment</a>
+                    <div class="empty-state-title">No upcoming appointments scheduled.</div>
+                    <p class="empty-state-desc">You do not have any pending consultations for today or future dates.</p>
+                    <a href="<?= $base_url ?>/patient/book_appointment.php" class="btn btn-primary" style="margin-top: 1.25rem;">+ Book an Appointment</a>
                 </div>
             <?php else: ?>
+                <?php if ($is_future_apt): ?>
+                    <div class="alert alert-info" style="font-size: 0.875rem; margin-bottom: 1.25rem; border-left: 4px solid var(--secondary);">
+                        📅 <strong>Day-Wise Notice:</strong> Your appointment is scheduled for <strong><?= format_date($active_apt['appointment_date']) ?></strong> at <strong><?= htmlspecialchars($active_apt['appointment_time']) ?></strong>. Today's clinic queue runs for today's patients. On your appointment day, the queue will start fresh from Token #1 with your booked token <strong><?= htmlspecialchars($active_apt['token_number']) ?></strong>.
+                    </div>
+                <?php endif; ?>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
                     <div>
                         <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Consulting Doctor</div>
@@ -170,7 +216,12 @@ include __DIR__ . '/../includes/header.php';
 
                     <div>
                         <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Date & Time Slot</div>
-                        <div style="font-size: 1.15rem; font-weight: 700; margin-top: 0.2rem;"><?= format_date($active_apt['appointment_date']) ?></div>
+                        <div style="font-size: 1.15rem; font-weight: 700; margin-top: 0.2rem;">
+                            <?= format_date($active_apt['appointment_date']) ?>
+                            <?php if ($is_today_apt): ?>
+                                <span style="font-size: 0.8rem; color: #059669; font-weight: 700;">(Today)</span>
+                            <?php endif; ?>
+                        </div>
                         <div style="color: var(--dark-muted); font-size: 0.9rem;"><?= htmlspecialchars($active_apt['appointment_time']) ?></div>
                     </div>
 
@@ -200,17 +251,17 @@ include __DIR__ . '/../includes/header.php';
         <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
             <a href="<?= $base_url ?>/patient/book_appointment.php" class="card" style="text-align: center; color: var(--dark);">
                 <div style="font-weight: 700; margin-bottom: 0.25rem;">Book Appointment</div>
-                <div style="font-size: 0.825rem; color: var(--text-muted);">Choose doctor & time slot</div>
+                <div style="font-size: 0.825rem; color: var(--text-muted);">Choose doctor, day & slot</div>
+            </a>
+
+            <a href="<?= $base_url ?>/patient/queue.php?date=<?= $today ?>" class="card" style="text-align: center; color: var(--dark); border-color: var(--primary-border);">
+                <div style="font-weight: 700; margin-bottom: 0.25rem; color: var(--primary);">🔴 Day-Wise Live Queue</div>
+                <div style="font-size: 0.825rem; color: var(--text-muted);">Today, tomorrow & daily board</div>
             </a>
 
             <a href="<?= $base_url ?>/patient/appointments.php" class="card" style="text-align: center; color: var(--dark);">
                 <div style="font-weight: 700; margin-bottom: 0.25rem;">My Appointments</div>
                 <div style="font-size: 0.825rem; color: var(--text-muted);">View schedule & cancel</div>
-            </a>
-
-            <a href="<?= $base_url ?>/patient/queue.php" class="card" style="text-align: center; color: var(--dark);">
-                <div style="font-weight: 700; margin-bottom: 0.25rem;">Track Live Queue</div>
-                <div style="font-size: 0.825rem; color: var(--text-muted);">Monitor token calling</div>
             </a>
 
             <a href="<?= $base_url ?>/patient/history.php" class="card" style="text-align: center; color: var(--dark);">

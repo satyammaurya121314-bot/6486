@@ -97,8 +97,8 @@ include __DIR__ . '/../includes/header.php';
                 <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Consultation Settings</h2>
                 <form method="POST" action="">
                     <div class="form-group">
-                        <label class="form-label">Doctor ID</label>
-                        <input type="text" class="form-control" value="#<?= (int)($doctor['doctor_id'] ?? 0) ?>" readonly style="background: var(--bg-main); font-weight: 700; color: var(--primary);">
+                        <label class="form-label">Doctor Desk Number</label>
+                        <input type="text" class="form-control" value="Desk #<?= get_doctor_seq_number($pdo, $doctor['doctor_id'] ?? 0) ?>" readonly style="background: var(--bg-main); font-weight: 700; color: var(--primary);">
                     </div>
 
                     <div class="form-group">

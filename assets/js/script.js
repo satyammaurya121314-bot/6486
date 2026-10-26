@@ -43,12 +43,16 @@ function initQueuePolling() {
     const tracker = document.getElementById('liveQueueTracker');
     if (!tracker) return;
 
-    const doctorId = tracker.dataset.doctorId;
+    const doctorId = tracker.dataset.doctorId || '';
     const appointmentId = tracker.dataset.appointmentId || '';
+    const date = tracker.dataset.date || '';
     const baseUrl = tracker.dataset.baseUrl || '';
 
     function pollQueue() {
-        const url = `${baseUrl}/api/queue_status.php?doctor_id=${encodeURIComponent(doctorId)}&appointment_id=${encodeURIComponent(appointmentId)}`;
+        let url = `${baseUrl}/api/queue_status.php?`;
+        if (doctorId) url += `doctor_id=${encodeURIComponent(doctorId)}&`;
+        if (appointmentId) url += `appointment_id=${encodeURIComponent(appointmentId)}&`;
+        if (date) url += `date=${encodeURIComponent(date)}&`;
         
         fetch(url)
             .then(res => {
@@ -88,6 +92,20 @@ function initQueuePolling() {
                     statusBadgeEl.innerHTML = data.status_html || `<span class="status-badge badge-${data.status.toLowerCase()}">${data.status}</span>`;
                 }
 
+                // Update Day Lineup Table dynamically
+                const tableBody = document.querySelector('#dayQueueTable tbody');
+                if (tableBody && Array.isArray(data.tokens_list)) {
+                    tableBody.innerHTML = data.tokens_list.map(item => `
+                        <tr style="${item.is_you ? 'background: rgba(5, 150, 105, 0.06); font-weight: 600;' : ''}">
+                            <td><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">#${item.position}</span></td>
+                            <td><span style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; color: ${item.is_you ? 'var(--primary)' : 'var(--dark)'};">${item.token_number}</span></td>
+                            <td>${item.time}</td>
+                            <td>${item.is_you ? '<span style="background: var(--primary); color: #ffffff; padding: 0.2rem 0.65rem; border-radius: var(--radius-full); font-size: 0.775rem; font-weight: 700;">★ Your Token</span>' : '<span style="color: var(--text-muted); font-size: 0.9rem;">Patient in line</span>'}</td>
+                            <td>${item.status_html || item.status}</td>
+                        </tr>
+                    `).join('');
+                }
+
                 // If completed or cancelled, handle notice
                 if (data.status === 'Completed' || data.status === 'Cancelled') {
                     const noticeEl = document.getElementById('queueActiveNotice');
@@ -103,7 +121,7 @@ function initQueuePolling() {
 
     // Immediate initial poll then periodic
     pollQueue();
-    queuePollInterval = setInterval(pollQueue, 4000);
+    queuePollInterval = setInterval(pollQueue, 3500);
 }
 
 // Notification Toast System

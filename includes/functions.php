@@ -138,13 +138,51 @@ function get_booked_slots($pdo, $doctor_id, $date) {
 }
 
 /**
+ * Determine letter prefix (A, B, C...) based on currently available doctors sequence
+ */
+function get_doctor_prefix($pdo, $doctor_id) {
+    try {
+        // Query active available doctors ordered by doctor_id
+        $stmt = $pdo->query("SELECT doctor_id FROM doctors WHERE availability_status = 'Available' ORDER BY doctor_id ASC");
+        $doc_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $pos = array_search((int)$doctor_id, array_map('intval', $doc_ids));
+        if ($pos === false) {
+            // Fallback to all doctors order if doctor is temporarily unavailable
+            $all_stmt = $pdo->query("SELECT doctor_id FROM doctors ORDER BY doctor_id ASC");
+            $all_ids = $all_stmt->fetchAll(PDO::FETCH_COLUMN);
+            $pos = array_search((int)$doctor_id, array_map('intval', $all_ids));
+            if ($pos === false) {
+                $pos = 0;
+            }
+        }
+        return chr(65 + ($pos % 26));
+    } catch (Exception $e) {
+        return chr(65 + ((max(1, (int)$doctor_id) - 1) % 26));
+    }
+}
+
+/**
+ * Get sequential order number of doctor among current registered doctors (1, 2, 3...)
+ */
+function get_doctor_seq_number($pdo, $doctor_id) {
+    try {
+        $stmt = $pdo->query("SELECT doctor_id FROM doctors ORDER BY doctor_id ASC");
+        $all_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $pos = array_search((int)$doctor_id, array_map('intval', $all_ids));
+        return ($pos !== false) ? ($pos + 1) : 1;
+    } catch (Exception $e) {
+        return (int)$doctor_id;
+    }
+}
+
+/**
  * Generate unique token for a doctor on an appointment date
  * Format: Letter prefix (A, B, C...) + 3 digits (e.g. A-001, A-002)
  */
 function generate_doctor_token($pdo, $doctor_id, $appointment_date) {
-    // Determine letter prefix from doctor_id
-    // Doctor 1 -> A, Doctor 2 -> B, Doctor 27 -> AA, etc.
-    $prefix = chr(65 + (($doctor_id - 1) % 26));
+    // Determine letter prefix from current available doctors sequence
+    $prefix = get_doctor_prefix($pdo, $doctor_id);
 
     // Get all existing tokens for this doctor on this date
     $stmt = $pdo->prepare("

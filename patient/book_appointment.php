@@ -14,15 +14,20 @@ $patient_id = $_SESSION['user_id'];
 $error = '';
 $confirmed_appointment = null;
 
-// Get available doctors
+// Get currently available doctors
 $doc_stmt = $pdo->query("
     SELECT doctor_id, doctor_name, specialization, available_time, availability_status 
     FROM doctors 
+    WHERE availability_status = 'Available'
     ORDER BY doctor_id ASC
 ");
 $all_doctors = $doc_stmt->fetchAll();
 
+$available_ids = array_map(function($d) { return (int)$d['doctor_id']; }, $all_doctors);
 $selected_doctor_id = (int)($_POST['doctor_id'] ?? $_GET['doctor_id'] ?? ($all_doctors[0]['doctor_id'] ?? 0));
+if (!empty($available_ids) && !in_array($selected_doctor_id, $available_ids, true)) {
+    $selected_doctor_id = $available_ids[0];
+}
 $selected_date = trim($_POST['appointment_date'] ?? $_GET['date'] ?? date('Y-m-d'));
 
 // Prevent past dates
@@ -123,9 +128,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_booking'])) {
                         $notif_msg = "Your appointment is confirmed with Dr. {$doc_info['doctor_name']} on {$apt_date} at {$apt_time}. Token: {$token_number}.";
                         add_notification($pdo, $patient_id, $notif_msg, 'appointment_confirmed', $doc_id, $new_apt_id);
 
+                        // Compute day-wise queue position for this doctor and date
+                        $day_pos_stmt = $pdo->prepare("
+                            SELECT COUNT(*) 
+                            FROM appointments 
+                            WHERE doctor_id = ? AND appointment_date = ? AND appointment_id <= ? AND status != 'Cancelled'
+                        ");
+                        $day_pos_stmt->execute([$doc_id, $apt_date, $new_apt_id]);
+                        $day_position = (int)$day_pos_stmt->fetchColumn();
+
                         // Set confirmation record
                         $confirmed_appointment = [
                             'appointment_id' => $new_apt_id,
+                            'day_position'   => $day_position,
                             'doctor_name'    => $doc_info['doctor_name'],
                             'specialization' => $doc_info['specialization'],
                             'date'           => $apt_date,
@@ -185,8 +200,11 @@ include __DIR__ . '/../includes/header.php';
                         <div style="margin-top: 0.25rem;"><?= render_status_badge($confirmed_appointment['status']) ?></div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">APPOINTMENT ID</div>
-                        <div style="font-weight: 700; color: var(--dark);">#<?= (int)$confirmed_appointment['appointment_id'] ?></div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">DAY QUEUE POSITION</div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 1.05rem;">
+                            #<?= (int)($confirmed_appointment['day_position'] ?? 1) ?> 
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">(Ref: #<?= (int)$confirmed_appointment['appointment_id'] ?>)</span>
+                        </div>
                     </div>
                 </div>
 
@@ -224,11 +242,11 @@ include __DIR__ . '/../includes/header.php';
                     <form method="GET" action="" id="doctorDateForm" style="margin-bottom: 1.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label" for="doctor_select">1. Select Consulting Doctor</label>
+                                <label class="form-label" for="doctor_select">1. Select Consulting Doctor (<?= count($all_doctors) ?> Available)</label>
                                 <select id="doctor_select" name="doctor_id" class="form-select" onchange="document.getElementById('doctorDateForm').submit();">
                                     <?php foreach ($all_doctors as $index => $doc): ?>
                                         <option value="<?= (int)$doc['doctor_id'] ?>" <?= $selected_doctor_id === (int)$doc['doctor_id'] ? 'selected' : '' ?>>
-                                            Dr. <?= htmlspecialchars($doc['doctor_name']) ?> (ID: #<?= $index + 1 ?> - <?= htmlspecialchars($doc['specialization']) ?>) - [<?= htmlspecialchars($doc['availability_status']) ?>]
+                                            Dr. <?= htmlspecialchars($doc['doctor_name']) ?> (<?= htmlspecialchars($doc['specialization']) ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -247,7 +265,6 @@ include __DIR__ . '/../includes/header.php';
                             <div>
                                 <div style="font-weight: 700; font-size: 1.05rem;">
                                     Dr. <?= htmlspecialchars($current_doctor['doctor_name']) ?>
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); margin-left: 0.35rem;">Doctor ID: #<?= $current_doctor_index + 1 ?></span>
                                 </div>
                                 <div style="color: var(--primary); font-size: 0.85rem; font-weight: 600;"><?= htmlspecialchars($current_doctor['specialization']) ?></div>
                                 <div style="color: var(--text-muted); font-size: 0.825rem; margin-top: 0.25rem;">

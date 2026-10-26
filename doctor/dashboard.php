@@ -68,7 +68,7 @@ include __DIR__ . '/../includes/header.php';
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">
                     Dr. <?= htmlspecialchars($doctor['doctor_name'] ?? 'Doctor') ?>
-                    <span style="font-size: 0.95rem; color: var(--primary); font-weight: 700; background: var(--primary-light); padding: 0.25rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); vertical-align: middle; margin-left: 0.5rem;">Doctor ID: #<?= (int)$doctor_id ?></span>
+                    <span style="font-size: 0.95rem; color: var(--primary); font-weight: 700; background: var(--primary-light); padding: 0.25rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-border); vertical-align: middle; margin-left: 0.5rem;">Doctor Desk #<?= get_doctor_seq_number($pdo, $doctor_id) ?></span>
                 </h1>
                 <p style="color: var(--text-muted); font-size: 0.9rem;">
                     Specialization: <strong><?= htmlspecialchars($doctor['specialization'] ?? '') ?></strong> | 

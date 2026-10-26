@@ -36,6 +36,8 @@ define('DB_PASS', get_config('MYSQLPASSWORD', get_config('DB_PASS', '')));
 define('DB_CHARSET', get_config('DB_CHARSET', 'utf8mb4'));
 define('APP_ENV', get_config('APP_ENV', 'development'));
 
+date_default_timezone_set(get_config('TIMEZONE', 'Asia/Kolkata'));
+
 if (APP_ENV === 'production') {
     ini_set('display_errors', '0');
     ini_set('display_startup_errors', '0');

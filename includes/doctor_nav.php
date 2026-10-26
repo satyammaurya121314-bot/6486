@@ -3,11 +3,15 @@
 $base_url = get_base_url();
 $cur = basename($_SERVER['PHP_SELF']);
 $user = current_user();
+if (!isset($pdo)) {
+    $pdo = get_db_connection();
+}
+$nav_doc_num = get_doctor_seq_number($pdo, $user['id'] ?? 0);
 ?>
 <aside class="dashboard-sidebar">
     <div class="sidebar-profile">
         <div class="profile-name">Dr. <?= htmlspecialchars($user['name'] ?? 'Doctor') ?></div>
-        <div class="profile-role">Doctor Desk &bull; <strong style="color: var(--primary);">ID: #<?= (int)($user['id'] ?? 0) ?></strong></div>
+        <div class="profile-role">Doctor Desk &bull; <strong style="color: var(--primary);">Desk #<?= $nav_doc_num ?></strong></div>
     </div>
 
     <ul class="sidebar-menu">

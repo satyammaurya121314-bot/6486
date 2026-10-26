@@ -7,7 +7,7 @@ $user = current_user();
 <aside class="dashboard-sidebar">
     <div class="sidebar-profile">
         <div class="profile-name"><?= htmlspecialchars($user['name'] ?? 'Patient') ?></div>
-        <div class="profile-role">Patient Portal &bull; <strong style="color: var(--primary);">ID: #<?= (int)($user['id'] ?? 0) ?></strong></div>
+        <div class="profile-role">Patient Portal</div>
     </div>
 
     <ul class="sidebar-menu">
