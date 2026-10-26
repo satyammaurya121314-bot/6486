@@ -74,7 +74,6 @@ include __DIR__ . '/../includes/header.php';
     <main class="dashboard-main">
         <div style="margin-bottom: 1.5rem;">
             <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Patient Profile</h1>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Manage your contact information and account security.</p>
         </div>
 
         <?php if ($error): ?>

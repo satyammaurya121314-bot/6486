@@ -80,7 +80,6 @@ include __DIR__ . '/../includes/header.php';
     <main class="dashboard-main">
         <div style="margin-bottom: 1.5rem;">
             <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Doctor Profile & Availability</h1>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Configure your consultation hours, live availability status, and credentials.</p>
         </div>
 
         <?php if ($error): ?>

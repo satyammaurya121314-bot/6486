@@ -63,7 +63,7 @@ include __DIR__ . '/includes/header.php';
         <div class="section-header">
             <div class="section-subtitle">Real-Time Transparency</div>
             <h2 class="section-title">Live Token Tracking</h2>
-            <p class="section-desc">Real-time status updates powered directly by MySQL consultation records.</p>
+            <p class="section-desc">Real-time status updates powered directly by live consultation records.</p>
         </div>
 
         <div class="queue-board-card" style="max-width: 900px; margin: 0 auto;">

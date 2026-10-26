@@ -56,7 +56,6 @@ include __DIR__ . '/../includes/header.php';
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Doctor Consultation Registry</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Complete historical and scheduled appointment records.</p>
             </div>
             <div>
                 <a href="<?= $base_url ?>/doctor/queue.php" class="btn btn-primary">Go to Live Queue &rarr;</a>

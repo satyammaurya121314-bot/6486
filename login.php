@@ -96,7 +96,7 @@ include __DIR__ . '/includes/header.php';
         <?php if ($selected_role === 'admin' && $setup_needed): ?>
             <div class="alert alert-warning" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                 <div><strong>First Time Admin Setup</strong></div>
-                <div style="font-size: 0.85rem;">No administrator accounts exist yet in MySQL. You can securely initialize the primary administrator.</div>
+                <div style="font-size: 0.85rem;">No administrator accounts exist yet. You can securely initialize the primary administrator.</div>
                 <a href="<?= $base_url ?>/setup.php" class="btn btn-sm btn-primary" style="margin-top: 0.25rem;">Initialize Admin Account</a>
             </div>
         <?php endif; ?>

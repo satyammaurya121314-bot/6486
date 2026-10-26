@@ -222,7 +222,6 @@ include __DIR__ . '/../includes/header.php';
 
             <div style="margin-bottom: 1.5rem;">
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Book Doctor Appointment</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Select a certified doctor, appointment date, and choose an available consultation slot.</p>
             </div>
 
             <?php if ($error): ?>

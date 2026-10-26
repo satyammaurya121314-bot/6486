@@ -153,7 +153,6 @@ include __DIR__ . '/../includes/header.php';
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Doctor Management</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Register, configure, and maintain consulting medical staff.</p>
             </div>
             <div>
                 <?php if ($action !== 'add'): ?>
@@ -276,7 +275,7 @@ include __DIR__ . '/../includes/header.php';
                 <div class="card empty-state">
                     
                     <div class="empty-state-title">No doctors found.</div>
-                    <p class="empty-state-desc">The doctors table in MySQL has zero matching records.</p>
+                    <p class="empty-state-desc">No registered doctors found matching your query.</p>
                     <a href="<?= $base_url ?>/admin/doctors.php?action=add" class="btn btn-primary" style="margin-top: 1.25rem;">Add First Doctor</a>
                 </div>
             <?php else: ?>
